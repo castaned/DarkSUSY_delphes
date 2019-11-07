@@ -27,8 +27,8 @@ void muonpair(const char *inputFile) {
 
   TClonesArray *branchMuon = treeReader->UseBranch("Muon");
 
-  //  TH1F *m1 = new TH1F("m1","m1",200,60.0,140.0);
-  //  TH1F *m2 = new TH1F("m2","m2",200,60.0,140.0);
+  TH1F *m1 = new TH1F("m1","m1",200,0.0,240.0);
+  TH1F *m2 = new TH1F("m2","m2",200,0.0,240.0);
 
   Float_t mass;
 
@@ -42,6 +42,7 @@ void muonpair(const char *inputFile) {
 
     std::vector< std::vector<const Muon*> > Pairs;  // to store all muon pairs
     std::vector< std::vector<const Muon*> > PairsOpCharge;  // to store pairs with opposite charge
+    std::vector< std::vector<const Muon*> > FinalPairs;  // to store pairs with opposite charge
     
     // Select events with at least 4 muons
     if(branchMuon->GetEntries() > 3) {
@@ -52,9 +53,8 @@ void muonpair(const char *inputFile) {
 	
 	for (Int_t two = one; two < branchMuon->GetEntries(); ++two) { // loop muons
 
-
 	  if(one != two){
-	  
+	    
 	    muon2temp = (Muon*) branchMuon->At(two);
 	  
 	    std::vector<const Muon*> pairOfMuons;
@@ -69,7 +69,7 @@ void muonpair(const char *inputFile) {
       } // close loop for one 
       
 
-      cout<<" Unique number of pairs  "<<Pairs.size()<<endl;
+      //      cout<<" Unique number of pairs  "<<Pairs.size()<<endl;
       
 
       for(int j = 0; j< Pairs.size(); ++j){  // to check pairs of muons with opposite charge
@@ -81,12 +81,105 @@ void muonpair(const char *inputFile) {
 	}
       }
 
-      cout<<" Pairs with opposite charge  "<<PairsOpCharge.size()<<endl;
+      // m1->Fill( ( PairsOpCharge[0][0]->P4() + PairsOpCharge[0][1]->P4()).M()   );
+      // m2->Fill( ( PairsOpCharge[1][0]->P4() + PairsOpCharge[1][1]->P4()).M()  );
+
       
+      double deltaMassTmp = 13000.0;
+      
+      // delta mass b/t each of two pairs
+      std::vector<float> AbsdMass;
+      std::vector<int> Alice;
+      std::vector<int> Bob;
+      
+      
+      if(PairsOpCharge.size()>1){
+
+	for(unsigned int Ajet=0; Ajet < PairsOpCharge.size(); Ajet++){
+	  for(unsigned int Bjet=0; Bjet< PairsOpCharge.size(); Bjet++){
+
+	    deltaMassTmp = fabs(  (PairsOpCharge[Ajet][0]->P4() + PairsOpCharge[Ajet][1]->P4()).M() - (PairsOpCharge[Bjet][0]->P4()+PairsOpCharge[Bjet][1]->P4()).M());
+	    
+	    AbsdMass.push_back(deltaMassTmp);
+
+	    cout<<"  Alice  "<<Ajet<<" Bob  "<<Bjet<<endl;
+
+	    Alice.push_back(Ajet);
+	    Bob.push_back(Bjet);
+	    
+	  }
+	}
+      
+	std::vector<const Muon*> PairOne;
+	std::vector<const Muon*> PairTwo;
+      
+      
+	if ( ( AbsdMass.size() == Alice.size() ) &&
+	     ( AbsdMass.size() == Bob.size() ) ) {
+	
+	
+	  unsigned int Findcount = 0;
+	  while( FinalPairs.size() != 2 && Findcount < AbsdMass.size() ){
+	  
+	    //find two pairs with min |dM|
+	    double MinDeltaMass = 13000.;
+	    unsigned int Index = -1;
+	    Findcount++;
+
+	  
+	    for (unsigned int X = 0; X < AbsdMass.size(); X++) {
+	      //std::cout << ">>>>>> AbsdMass.at("<<X<<") = "<< AbsdMass.at(X) << std::endl;
+	      if( AbsdMass.at(X) < MinDeltaMass){
+		MinDeltaMass = AbsdMass[X];
+
+		PairOne = PairsOpCharge[Alice[X]];
+		PairTwo = PairsOpCharge[Bob[X]];
+		Index = X;
+	      }//end if
+	      //	      cout<<" Alice  "<<Alice[X]<<"  Bob   "<<Bob[X]<<endl;
+
+	    }//end find pairs with min |dM|
+	    
+
+	    //	  std::cout << ">>> Found two pairs with min |dM|, [mass #"<<Alice.at(Index)<<", mass #"<<Bob.at(Index)<<"  "<<AbsdMass.at(Index)<<", " << Index <<"]"<< std::endl;
+	  }
+
+
+
+	  cout<<" m1   "<<  (PairOne[0]->P4() + PairOne[1]->P4()).M() <<endl;
+	  cout<<" m2   "<<  (PairTwo[0]->P4() + PairTwo[1]->P4()).M() <<endl;
+
+	  
+	  FinalPairs.push_back(PairOne);
+	  FinalPairs.push_back(PairTwo);
+
+	}
+      
+      }
+      ///      cout<<" Pairs with opposite charge  "<<PairsOpCharge.size()<<endl;
+      //      cout<<" Pairs with min dM  "<<FinalPairs.size()<<endl;
+
+
+      //      cout<<" m1   "<<(FinalPairs[0][0]->P4() + FinalPairs[0][1]->P4()).M()<<endl;
+      //      cout<<" m2   "<<(FinalPairs[1][0]->P4() + FinalPairs[1][1]->P4()).M()<<endl;
+      
+      m1->Fill( ( FinalPairs[0][0]->P4() + FinalPairs[0][1]->P4()).M()   );
+      m2->Fill( ( FinalPairs[1][0]->P4() + FinalPairs[1][1]->P4()).M()  );
+       
     }  // close conditional >= 4 muons
     Pairs.clear();
     PairsOpCharge.clear();
+    FinalPairs.clear();
     
-  } // close loop for events
-} // close  funtion
+  }
+
+
+  TCanvas *c = new TCanvas("c","c");
+  m1->Draw();
+
+  TCanvas *c1 = new TCanvas("c1","c1");
+  m2->Draw();
+
+}
+
 
