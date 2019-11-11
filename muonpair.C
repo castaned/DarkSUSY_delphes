@@ -12,6 +12,10 @@ R__LOAD_LIBRARY(libDelphes.so)
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 #endif
 
+
+
+
+
 //------------------------------------------------------------------------------
 
 void muonpair(const char *inputFile) {
@@ -30,6 +34,13 @@ void muonpair(const char *inputFile) {
   TH1F *m1 = new TH1F("m1","m1",200,0.0,240.0);
   TH1F *m2 = new TH1F("m2","m2",200,0.0,240.0);
 
+
+  TH1F *ptmuon1 = new TH1F("ptmuon1","ptmuon1",100,0.0,300.0);
+  TH1F *ptmuon2 = new TH1F("ptmuon2","ptmuon2",100,0.0,300.0);
+  TH1F *ptmuon3 = new TH1F("ptmuon3","ptmuon3",100,0.0,300.0);
+  TH1F *ptmuon4 = new TH1F("ptmuon4","ptmuon4",100,0.0,300.0);
+
+  
   Float_t mass;
 
   // Loop over all events
@@ -39,13 +50,25 @@ void muonpair(const char *inputFile) {
     treeReader->ReadEntry(entry);
 
     Muon *muon1temp, *muon2temp;
-
+    Muon *muon1,*muon2,*muon3,*muon4;
+    
     std::vector< std::vector<const Muon*> > Pairs;  // to store all muon pairs
     std::vector< std::vector<const Muon*> > PairsOpCharge;  // to store pairs with opposite charge
     std::vector< std::vector<const Muon*> > FinalPairs;  // to store pairs with opposite charge
     
     // Select events with at least 4 muons
     if(branchMuon->GetEntries() > 3) {
+
+      muon1 = (Muon*) branchMuon->At(0);
+      muon2 = (Muon*) branchMuon->At(1);
+      muon3 = (Muon*) branchMuon->At(2);
+      muon4 = (Muon*)branchMuon->At(3);
+      
+      ptmuon1->Fill(muon1->PT);
+      ptmuon2->Fill(muon2->PT);
+      ptmuon3->Fill(muon3->PT);
+      ptmuon4->Fill(muon4->PT);
+
       
       for(Int_t one = 0; one < branchMuon->GetEntries(); ++one) { // loop muons
 	
@@ -180,6 +203,27 @@ void muonpair(const char *inputFile) {
   TCanvas *c1 = new TCanvas("c1","c1");
   m2->Draw();
 
+
+  TLegend *leg = new TLegend(0.5,0.7);
+  leg->AddEntry(ptmuon1,"ptmuon1");
+  leg->AddEntry(ptmuon2,"ptmuon2");
+  leg->AddEntry(ptmuon3,"ptmuon3");
+  leg->AddEntry(ptmuon4,"ptmuon4");
+  
+  TCanvas *c2 = new TCanvas("c2","c2");
+  //  c2->SetLogy();
+  ptmuon1->SetLineColor(1);
+  ptmuon3->Draw();
+
+  ptmuon2->SetLineColor(2);
+  ptmuon2->Draw("same");
+  ptmuon3->SetLineColor(3);
+  ptmuon1->Draw("same"); 
+  ptmuon4->SetLineColor(4);
+  ptmuon4->Draw("same");
+  leg->Draw("same");
+
+  
 }
 
 
