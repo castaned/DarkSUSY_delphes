@@ -31,20 +31,21 @@ void muonpair(const char *inputFile) {
 
   TClonesArray *branchMuon = treeReader->UseBranch("Muon");
 
-  TH1F *m1 = new TH1F("m1","m1",200,0.0,240.0);
-  TH1F *m2 = new TH1F("m2","m2",200,0.0,240.0);
+  TH1F *m1 = new TH1F("m1","m1",200,3.0,7.0);
+  TH1F *m2 = new TH1F("m2","m2",200,3.0,7.0);
 
 
-  TH1F *ptmuon1 = new TH1F("ptmuon1","ptmuon1",100,0.0,300.0);
-  TH1F *ptmuon2 = new TH1F("ptmuon2","ptmuon2",100,0.0,300.0);
-  TH1F *ptmuon3 = new TH1F("ptmuon3","ptmuon3",100,0.0,300.0);
-  TH1F *ptmuon4 = new TH1F("ptmuon4","ptmuon4",100,0.0,300.0);
+  TH1F *ptmuon1 = new TH1F("ptmuon1","ptmuon1",100,0.0,100.0);
+  TH1F *ptmuon2 = new TH1F("ptmuon2","ptmuon2",100,0.0,100.0);
+  TH1F *ptmuon3 = new TH1F("ptmuon3","ptmuon3",100,0.0,100.0);
+  TH1F *ptmuon4 = new TH1F("ptmuon4","ptmuon4",100,0.0,100.0);
 
   
   Float_t mass;
 
   // Loop over all events
   for (Int_t entry = 0; entry < numberOfEntries; ++entry) {
+    //  for (Int_t entry = 0; entry < 30; ++entry) {
 
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
@@ -90,19 +91,25 @@ void muonpair(const char *inputFile) {
 	  }
 	} // close loop for two 
       } // close loop for one 
-      
+
+
+
+
 
       //      cout<<" Unique number of pairs  "<<Pairs.size()<<endl;
       
-
+	
       for(int j = 0; j< Pairs.size(); ++j){  // to check pairs of muons with opposite charge
 
-	if(Pairs[j][0]->Charge != Pairs[j][1]->Charge){
-
-	  PairsOpCharge.push_back(Pairs[j]);
+	//	cout<<" charge  "<<Pairs[j][0]->Charge<<endl;
 	
+	if(Pairs[j][0]->Charge != Pairs[j][1]->Charge){
+	  
+	  PairsOpCharge.push_back(Pairs[j]);
+	  
 	}
       }
+      
 
       // m1->Fill( ( PairsOpCharge[0][0]->P4() + PairsOpCharge[0][1]->P4()).M()   );
       // m2->Fill( ( PairsOpCharge[1][0]->P4() + PairsOpCharge[1][1]->P4()).M()  );
@@ -115,76 +122,80 @@ void muonpair(const char *inputFile) {
       std::vector<int> Alice;
       std::vector<int> Bob;
       
-      
       if(PairsOpCharge.size()>1){
-
+	
 	for(unsigned int Ajet=0; Ajet < PairsOpCharge.size(); Ajet++){
-	  for(unsigned int Bjet=0; Bjet< PairsOpCharge.size(); Bjet++){
-
+	  for(unsigned int Bjet=Ajet; Bjet< PairsOpCharge.size(); Bjet++){
+	    
+	    if(Ajet != Bjet){
 	    deltaMassTmp = fabs(  (PairsOpCharge[Ajet][0]->P4() + PairsOpCharge[Ajet][1]->P4()).M() - (PairsOpCharge[Bjet][0]->P4()+PairsOpCharge[Bjet][1]->P4()).M());
+
+	    //	    cout<<" delta mass "<<deltaMassTmp<<endl;
+	    
 	    
 	    AbsdMass.push_back(deltaMassTmp);
-
-	    cout<<"  Alice  "<<Ajet<<" Bob  "<<Bjet<<endl;
-
+	    
+	    //	    cout<<"  Alice  "<<Ajet<<" Bob  "<<Bjet<<endl;
+	    
 	    Alice.push_back(Ajet);
 	    Bob.push_back(Bjet);
-	    
+	    }
 	  }
 	}
-      
+	
 	std::vector<const Muon*> PairOne;
 	std::vector<const Muon*> PairTwo;
-      
-      
+	
+
+	cout<<" mass size  "<<AbsdMass.size()<<endl;
+	
 	if ( ( AbsdMass.size() == Alice.size() ) &&
 	     ( AbsdMass.size() == Bob.size() ) ) {
 	
-	
+	  
 	  unsigned int Findcount = 0;
 	  while( FinalPairs.size() != 2 && Findcount < AbsdMass.size() ){
-	  
-	    //find two pairs with min |dM|
-	    double MinDeltaMass = 13000.;
-	    unsigned int Index = -1;
-	    Findcount++;
-
-	  
-	    for (unsigned int X = 0; X < AbsdMass.size(); X++) {
-	      //std::cout << ">>>>>> AbsdMass.at("<<X<<") = "<< AbsdMass.at(X) << std::endl;
-	      if( AbsdMass.at(X) < MinDeltaMass){
-		MinDeltaMass = AbsdMass[X];
-
-		PairOne = PairsOpCharge[Alice[X]];
-		PairTwo = PairsOpCharge[Bob[X]];
-		Index = X;
-	      }//end if
-	      //	      cout<<" Alice  "<<Alice[X]<<"  Bob   "<<Bob[X]<<endl;
-
-	    }//end find pairs with min |dM|
 	    
+	  //find two pairs with min |dM|
+	  float MinDeltaMass = 13000.;
+	  unsigned int Index = -1;
+	  Findcount++;
+	  
+	  
+	  for (unsigned int X = 0; X < AbsdMass.size(); X++) {
+	    //std::cout << ">>>>>> AbsdMass.at("<<X<<") = "<< AbsdMass.at(X) << std::endl;
 
-	    //	  std::cout << ">>> Found two pairs with min |dM|, [mass #"<<Alice.at(Index)<<", mass #"<<Bob.at(Index)<<"  "<<AbsdMass.at(Index)<<", " << Index <<"]"<< std::endl;
+	    //	    cout<<"  AbsdMass[X] "<<AbsdMass.at(X)<<"  minDeltaMass "<<MinDeltaMass<<"  X  "<<X<<endl;
+	    if( AbsdMass.at(X) < MinDeltaMass){
+	      MinDeltaMass = AbsdMass[X];
+
+	      cout<<" Alice  "<<Alice[X]<<" bob   "<<Bob[X]<<endl;
+	      
+	      PairOne = PairsOpCharge[Alice[X]];
+	      PairTwo = PairsOpCharge[Bob[X]];
+	      Index = X;
+	    }//end if
+	    //	      cout<<" Alice  "<<Alice[X]<<"  Bob   "<<Bob[X]<<endl;
+	    
+	  }//end find pairs with min |dM|
+	  
+	  
+	  //	  std::cout << ">>> Found two pairs with min |dM|, [mass #"<<Alice.at(Index)<<", mass #"<<Bob.at(Index)<<"  "<<AbsdMass.at(Index)<<", " << Index <<"]"<< std::endl;
 	  }
-
-
-
-	  cout<<" m1   "<<  (PairOne[0]->P4() + PairOne[1]->P4()).M() <<endl;
-	  cout<<" m2   "<<  (PairTwo[0]->P4() + PairTwo[1]->P4()).M() <<endl;
+	
+	
 
 	  
 	  FinalPairs.push_back(PairOne);
 	  FinalPairs.push_back(PairTwo);
-
 	}
-      
       }
       ///      cout<<" Pairs with opposite charge  "<<PairsOpCharge.size()<<endl;
       //      cout<<" Pairs with min dM  "<<FinalPairs.size()<<endl;
 
 
-      //      cout<<" m1   "<<(FinalPairs[0][0]->P4() + FinalPairs[0][1]->P4()).M()<<endl;
-      //      cout<<" m2   "<<(FinalPairs[1][0]->P4() + FinalPairs[1][1]->P4()).M()<<endl;
+      cout<<" m1   "<<(FinalPairs[0][0]->P4() + FinalPairs[0][1]->P4()).M()<<endl;
+      cout<<" m2   "<<(FinalPairs[1][0]->P4() + FinalPairs[1][1]->P4()).M()<<endl;
       
       m1->Fill( ( FinalPairs[0][0]->P4() + FinalPairs[0][1]->P4()).M()   );
       m2->Fill( ( FinalPairs[1][0]->P4() + FinalPairs[1][1]->P4()).M()  );
@@ -204,7 +215,7 @@ void muonpair(const char *inputFile) {
   m2->Draw();
 
 
-  TLegend *leg = new TLegend(0.5,0.7);
+  TLegend *leg = new TLegend(0.5,0.7,0.7,0.9);
   leg->AddEntry(ptmuon1,"ptmuon1");
   leg->AddEntry(ptmuon2,"ptmuon2");
   leg->AddEntry(ptmuon3,"ptmuon3");
