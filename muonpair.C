@@ -13,12 +13,30 @@ R__LOAD_LIBRARY(libDelphes.so)
 #endif
 
 
+#include "TROOT.h"
+#include "TSystem.h"
+#include "TApplication.h"
+
+#include "tdrstyle.C"
+
+
+
+void rootlogon()
+{
+  // Load CMS style
+  gROOT->LoadMacro("tdrstyle.C");
+  setTDRStyle();
+}
+
+
 
 //------------------------------------------------------------------------------
 
 void muonpair(const char *inputFile) {
   gSystem->Load("libDelphes");
 
+  rootlogon();
+  
   // Create chain of root trees
   TChain chain("Delphes");
   chain.Add(inputFile);
@@ -42,8 +60,8 @@ void muonpair(const char *inputFile) {
   Float_t mass;
 
   // Loop over all events
-  //  for (Int_t entry = 0; entry < numberOfEntries; ++entry) {
-    for (Int_t entry = 0; entry < 100; ++entry) {
+  for (Int_t entry = 0; entry < numberOfEntries; ++entry) {
+  //    for (Int_t entry = 0; entry < 100; ++entry) {
 
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
@@ -54,6 +72,9 @@ void muonpair(const char *inputFile) {
     std::vector< std::vector<const Muon*> > Pairs;  // to store all muon pairs
     std::vector< std::vector<const Muon*> > PairsOpCharge;  // to store pairs with opposite charge
     std::vector< std::vector<const Muon*> > FinalPairs;  // to store pairs with opposite charge
+
+    //    std::vector< pair <int,int> > PairPos;
+
     
     // Select events with at least 4 muons
     if(branchMuon->GetEntries() > 3) {
@@ -85,7 +106,6 @@ void muonpair(const char *inputFile) {
 	    pairOfMuons.push_back(muon2temp);
 	    
 	    Pairs.push_back(pairOfMuons);
-	  
 	  }
 	} // close loop for two 
       } // close loop for one 
@@ -178,7 +198,7 @@ void muonpair(const char *inputFile) {
 	    //	  std::cout << ">>> Found two pairs with min |dM|, [mass #"<<Alice.at(Index)<<", mass #"<<Bob.at(Index)<<"  "<<AbsdMass.at(Index)<<", " << Index <<"]"<< std::endl;
 
 
-	    float deltapt = 0.002;
+	    float deltapt = 0.0002;
 
 	    //	    cout<<" p1 muon0 - pair 2 muon0  "<<fabs(PairOne[0]->PT - PairTwo[0]->PT)<<endl;
 	    
@@ -224,29 +244,45 @@ void muonpair(const char *inputFile) {
 
 
   TCanvas *c = new TCanvas("c","c");
+  m1->GetYaxis()->SetTitle("Entries");
+  m1->GetXaxis()->SetTitle("dimuon1 Mass [GeV]");
+  m1->SetFillColor(2);
   m1->Draw();
 
+  TLatex latex;
+  latex.SetTextSize(0.040);
+  latex.SetTextAlign(13);  //align at top
+  latex.DrawLatex(5.5,50,"m_{#gamma_{D}} = 5.0 GeV");
+
+
+  
+
   TCanvas *c1 = new TCanvas("c1","c1");
+  m2->GetYaxis()->SetTitle("Entries");
+  m2->GetXaxis()->SetTitle("dimuon2 Mass [GeV]");
+  m2->SetFillColor(2);
   m2->Draw();
 
 
   TLegend *leg = new TLegend(0.5,0.7,0.7,0.9);
-  leg->AddEntry(ptmuon1,"ptmuon1");
-  leg->AddEntry(ptmuon2,"ptmuon2");
-  leg->AddEntry(ptmuon3,"ptmuon3");
-  leg->AddEntry(ptmuon4,"ptmuon4");
+  leg->AddEntry(ptmuon1,"#mu_{1}","L");
+  leg->AddEntry(ptmuon2,"#mu_{2}","L");
+  leg->AddEntry(ptmuon3,"#mu_{3}","L");
+  leg->AddEntry(ptmuon4,"#mu_{4}","L");
   
   TCanvas *c2 = new TCanvas("c2","c2");
   //  c2->SetLogy();
   ptmuon1->SetLineColor(1);
-  ptmuon3->Draw();
+  ptmuon3->GetXaxis()->SetTitle("pT [GeV]");
+  ptmuon3->GetYaxis()->SetTitle("entries");
+  ptmuon4->Draw();
 
   ptmuon2->SetLineColor(2);
   ptmuon2->Draw("same");
   ptmuon3->SetLineColor(3);
   ptmuon1->Draw("same"); 
   ptmuon4->SetLineColor(4);
-  ptmuon4->Draw("same");
+  ptmuon1->Draw("same");
   leg->Draw("same");
 
   
